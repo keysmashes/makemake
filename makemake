@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Copyright © 2019 Ash Holland. Licensed under the EUPL (1.2 or later).
+
+# NB: makemake is not space-safe or glob-character-safe, because make is also neither of those things.
+
+if [ -z "$1" ]; then
+	printf 'Usage: makemake TARGET\n'
+	exit 0
+fi
+
+prereqs() {
+	target=$1
+	# TODO: it would be nice not to have to depend on `make -p` here, as its format is not specified in POSIX.
+	newprereqs=$(make -pq -- "$target" | grep "^$target:")
+	newprereqs=${newprereqs#$target:}
+	newprereqs=${newprereqs# }
+	if [ -n "$newprereqs" ]; then
+		printf '%s\n' "$newprereqs"
+		# TODO: is this recursion strictly POSIX-compliant?
+		# It appears to work correctly in dash 0.5.8 and Bash 4.4.18.
+		for prereq in $newprereqs; do
+			printf '%s\n' "$(prereqs "$prereq")"
+		done
+	fi
+}
+
+target=$1
+watching=$(prereqs "$target")
+
+# shellcheck disable=SC2086
+fswatch -m poll_monitor $watching | xargs -n 1 -I {} make "$target"
