@@ -1,3 +1,7 @@
+**New repository: <https://codeberg.org/keysmashes/makemake>**
+
+---
+
 # makemake
 
 Automatic `make watch`, in 20 lines of POSIX shell.
